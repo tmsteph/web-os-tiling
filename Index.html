@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebOS with Tiling WM</title>
+  <style>
+    body {
+      margin: 0;
+      background: #282c34;
+      font-family: Arial, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #desktop {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    .window {
+      flex: 1 1 calc(50% - 10px);
+      min-width: 300px;
+      min-height: 200px;
+      background: #1e1e1e;
+      border: 2px solid #444;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .window-header {
+      background: #444;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      color: white;
+    }
+    .window-content {
+      flex: 1;
+      padding: 10px;
+      color: white;
+      overflow-y: auto;
+    }
+    #taskbar {
+      background: #333;
+      padding: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #apps {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      background: #444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="taskbar">
+    <div id="apps">
+      <button onclick="openWindow('terminal')">Terminal</button>
+      <button onclick="openWindow('text-editor')">Text Editor</button>
+      <button onclick="openWindow('calculator')">Calculator</button>
+    </div>
+    <div id="clock"></div>
+  </div>
+  <div id="desktop">
+    <!-- Windows will be dynamically added here -->
+  </div>
+
+  <script>
+    const desktop = document.getElementById('desktop');
+    const clock = document.getElementById('clock');
+
+    const apps = {
+      terminal: `
+        <div class="window-header">
+          <span>Terminal</span>
+          <button onclick="closeWindow(this)">X</button>
+        </div>
+        <div class="window-content">
+          <div id="terminal-output"></div>
+          <input type="text" id="terminal-input" placeholder="Type a command" onkeydown="handleCommand(event)">
+        </div>`,
+      'text-editor': `
+        <div class="window-header">
+          <span>Text Editor</span>
+          <button onclick="closeWindow(this)">X</button>
+        </div>
+        <div class="window-content">
+          <textarea id="editor-area" style="width: 100%; height: 100%;"></textarea>
+        </div>`,
+      calculator: `
+        <div class="window-header">
+          <span>Calculator</span>
+          <button onclick="closeWindow(this)">X</button>
+        </div>
+        <div class="window-content">
+          <input type="text" id="calc-input" style="width: 100%;" disabled>
+          <div>
+            <button onclick="calcPress('1')">1</button>
+            <button onclick="calcPress('2')">2</button>
+            <button onclick="calcPress('3')">3</button>
+            <button onclick="calcPress('+')">+</button>
+          </div>
+          <div>
+            <button onclick="calcPress('4')">4</button>
+            <button onclick="calcPress('5')">5</button>
+            <button onclick="calcPress('6')">6</button>
+            <button onclick="calcPress('-')">-</button>
+          </div>
+          <div>
+            <button onclick="calcPress('7')">7</button>
+            <button onclick="calcPress('8')">8</button>
+            <button onclick="calcPress('9')">9</button>
+            <button onclick="calcPress('*')">*</button>
+          </div>
+          <div>
+            <button onclick="calcPress('0')">0</button>
+            <button onclick="calcPress('.')">.</button>
+            <button onclick="calcEvaluate()">=</button>
+            <button onclick="calcPress('/')">/</button>
+          </div>
+          <button onclick="calcClear()">Clear</button>
+        </div>`,
+    };
+
+    function openWindow(app) {
+      const win = document.createElement('div');
+      win.className = 'window';
+      win.innerHTML = apps[app];
+      desktop.appendChild(win);
+      arrangeWindows();
+    }
+
+    function closeWindow(button) {
+      const win = button.closest('.window');
+      desktop.removeChild(win);
+      arrangeWindows();
+    }
+
+    function arrangeWindows() {
+      const windows = desktop.querySelectorAll('.window');
+      windows.forEach((win, index) => {
+        win.style.flex = '1 1 calc(50% - 10px)';
+      });
+    }
+
+    function updateClock() {
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString();
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Calculator functions
+    let calcValue = '';
+    function calcPress(value) {
+      calcValue += value;
+      document.getElementById('calc-input').value = calcValue;
+    }
+    function calcEvaluate() {
+      try {
+        calcValue = eval(calcValue).toString();
+        document.getElementById('calc-input').value = calcValue;
+      } catch {
+        document.getElementById('calc-input').value = 'Error';
+      }
+    }
+    function calcClear() {
+      calcValue = '';
+      document.getElementById('calc-input').value = '';
+    }
+  </script>
+</body>
+</html>
