@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebOS with Tiling WM</title>
+  <title>WebOS</title>
   <style>
     body {
       margin: 0;
@@ -69,6 +68,28 @@
     button:hover {
       background: #555;
     }
+    #notes-list {
+      margin-top: 10px;
+    }
+    .note-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #333;
+      padding: 5px;
+      margin: 5px 0;
+      border-radius: 3px;
+    }
+    .note-item button {
+      background: #555;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .note-item button:hover {
+      background: #666;
+    }
   </style>
 </head>
 <body>
@@ -77,6 +98,7 @@
       <button onclick="openWindow('terminal')">Terminal</button>
       <button onclick="openWindow('text-editor')">Text Editor</button>
       <button onclick="openWindow('calculator')">Calculator</button>
+      <button onclick="openWindow('notes')">Notes</button>
     </div>
     <div id="clock"></div>
   </div>
@@ -95,7 +117,10 @@
           <button onclick="closeWindow(this)">X</button>
         </div>
         <div class="window-content">
-          <div id="terminal-output"></div>
+          <div id="terminal-output">
+            Welcome to the terminal!<br>
+            Available commands: help, echo, clear, open [app-name] (e.g., text-editor, calculator, notes)
+          </div>
           <input type="text" id="terminal-input" placeholder="Type a command" onkeydown="handleCommand(event)">
         </div>`,
       'text-editor': `
@@ -139,6 +164,16 @@
           </div>
           <button onclick="calcClear()">Clear</button>
         </div>`,
+      notes: `
+        <div class="window-header">
+          <span>Notes</span>
+          <button onclick="closeWindow(this)">X</button>
+        </div>
+        <div class="window-content">
+          <textarea id="notes-area" style="width: 100%; height: 80px;" placeholder="Type your note here..."></textarea>
+          <button onclick="saveNote()">Save Note</button>
+          <div id="notes-list"></div>
+        </div>`,
     };
 
     function openWindow(app) {
@@ -166,11 +201,58 @@
       const now = new Date();
       clock.textContent = now.toLocaleTimeString();
     }
-
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Calculator functions
+    // Notes App Functions
+    function saveNote() {
+      const notesArea = document.getElementById('notes-area');
+      const notesList = document.getElementById('notes-list');
+      if (notesArea.value.trim() === "") return;
+
+      const noteItem = document.createElement('div');
+      noteItem.className = 'note-item';
+
+      const noteText = document.createElement('span');
+      noteText.textContent = notesArea.value;
+
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.onclick = () => notesList.removeChild(noteItem);
+
+      noteItem.appendChild(noteText);
+      noteItem.appendChild(deleteButton);
+
+      notesList.appendChild(noteItem);
+      notesArea.value = '';
+    }
+
+    // Terminal Functions
+    const commands = {
+      help: "Available commands: help, echo, clear, open [app-name]",
+      echo: (args) => args.join(' '),
+      clear: () => { document.getElementById('terminal-output').innerHTML = ''; return ''; },
+      open: (args) => { openWindow(args[0]); return `Opening ${args[0]}`; }
+    };
+
+    function handleCommand(event) {
+      if (event.key === 'Enter') {
+        const input = event.target;
+        const output = document.getElementById('terminal-output');
+        const [command, ...args] = input.value.split(' ');
+
+        const result = commands[command]
+          ? (typeof commands[command] === 'function' ? commands[command](args) : commands[command])
+          : `Command not found: ${command}`;
+
+        output.innerHTML += `<div>> ${input.value}</div>`;
+        if (result) output.innerHTML += `<div>${result}</div>`;
+        input.value = '';
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    // Calculator Functions
     let calcValue = '';
     function calcPress(value) {
       calcValue += value;
